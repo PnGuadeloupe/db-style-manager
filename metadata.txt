@@ -1,0 +1,30 @@
+[general]
+name=DB Style Manager
+qgisMinimumVersion=2.18
+description=Manage your styles stored in PostGIS
+version=0.1
+author=Etienne Trimaille
+email=etienne.trimaille@gmail.com
+
+about=It allows you sync styles between QGIS Desktop and Postgis
+
+tracker=http://bugs
+repository=http://repo
+
+# Recommended items:
+
+# Uncomment the following line and add your changelog:
+# changelog=
+
+# Tags are comma separated with spaces allowed
+tags=postgis,database,postgresql,style,sync
+
+homepage=http://homepage
+category=Database
+icon=resources/icon.png
+# experimental flag
+experimental=False
+
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+
