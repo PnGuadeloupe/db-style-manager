@@ -113,11 +113,11 @@ class DbStyleManager:
         self.action_save_style_default.triggered.connect(self.save_current_style_default)
 
         self.iface.legendInterface().addLegendLayerAction(
-            self.action_save_style, 'DbStyleManager', '', QgsMapLayer.VectorLayer, True)
+            self.action_save_style, tr('Database Style Manager'), '', QgsMapLayer.VectorLayer, True)
         self.iface.legendInterface().addLegendLayerAction(
-            self.action_save_style_default, 'DbStyleManager', '', QgsMapLayer.VectorLayer, True)
+            self.action_save_style_default, tr('Database Style Manager'), '', QgsMapLayer.VectorLayer, True)
         self.iface.legendInterface().addLegendLayerAction(
-            self.action_load_style_legend, 'DbStyleManager', '', QgsMapLayer.VectorLayer, True)
+            self.action_load_style_legend, tr('Database Style Manager'), '', QgsMapLayer.VectorLayer, True)
 
         # noinspection PyArgumentList
         registry = QgsMapLayerRegistry.instance()
