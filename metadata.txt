@@ -8,8 +8,8 @@ email=etienne.trimaille@gmail.com
 
 about=It allows you to sync styles between QGIS Desktop and Postgis. Funded by Guadeloupe National Park.
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/PnGuadeloupe/db-style-manager
+repository=https://github.com/PnGuadeloupe/db-style-manager
 
 # Recommended items:
 
@@ -19,7 +19,7 @@ repository=http://repo
 # Tags are comma separated with spaces allowed
 tags=postgis,database,postgresql,style,sync
 
-homepage=http://homepage
+homepage=https://github.com/PnGuadeloupe/db-style-manager
 category=Database
 icon=resources/icon.png
 # experimental flag
