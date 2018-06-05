@@ -16,11 +16,13 @@ Only for QGIS 2. QGIS 2.18.20 is needed to save style in the DB.
 
 Loading a postgresql layer in QGIS:
 * No style loaded in the layer menu
-* No layer name
+* No layer name in the legend. It's still the table name `c_coeur_de_parc`.
+
 ![legend](docs/no-plugin.png)
 
 ## With the plugin
 * QGIS will load automatically all styles associated with the layer.
+* This behavior can be enabled/disabled with the button in the toolbar.
 * The name of the style will be loaded too in the menu.
 * The name will match in QGIS Desktop and Postgis.
 * QGIS will save the layer name as description in the style table.
@@ -28,7 +30,7 @@ Loading a postgresql layer in QGIS:
 
 Loading a postgresql layer in QGIS:
 * All styles are loaded with their names
-* Layer name is set: 'Coeur de parc'
+* Layer name is set: `Coeur de parc`
 ![legend](docs/styles.png)
 * Menu to load all styles from postgis
 ![legend](docs/menu.png)

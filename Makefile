@@ -40,7 +40,7 @@ SOURCES = \
 	__init__.py \
 	sync_style.py sync_style_dialog.py
 
-PLUGINNAME = SyncStyle
+PLUGINNAME = DBStyleManager
 
 PY_FILES = \
 	__init__.py \
