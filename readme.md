@@ -3,7 +3,7 @@ This plugin allows you to synchronize styles contained in PostgreSQL with QGIS D
 
 Only for QGIS 2. QGIS 2.18.20 is needed to save style in the DB.
 
-## By default, with QGIS Desktop
+## By default, with QGIS Desktop, without the plugin
 
 * You can store one or many styles for one layer in postgresql.
 * You can store one style as default for a layer.
@@ -14,12 +14,24 @@ Only for QGIS 2. QGIS 2.18.20 is needed to save style in the DB.
   * Rename the style in QGIS to match the name in the database.
   * Do these steps for all styles.
 
+Loading a postgresql layer in QGIS:
+* No style loaded in the layer menu
+* No layer name
+![legend](docs/no-plugin.png)
+
 ## With the plugin
 * QGIS will load automatically all styles associated with the layer.
 * The name of the style will be loaded too in the menu.
 * The name will match in QGIS Desktop and Postgis.
 * QGIS will save the layer name as description in the style table.
 * The name of the style description will be loaded as layer name in the legend.
+
+Loading a postgresql layer in QGIS:
+* All styles are loaded with their names
+* Layer name is set: 'Coeur de parc'
+![legend](docs/styles.png)
+* Menu to load all styles from postgis
+![legend](docs/menu.png)
 
 ## Todo
 * Improve layer name (maybe QGIS 2.18.21 and QGIS 3.2.0)
