@@ -80,7 +80,7 @@ class DbStyleManager:
         tooltip = tr('Load styles automatically from PostgreSQL')
         icon = resources_path('icon.png')
         self.action_enable_sync_style = QAction(
-            QIcon(icon), tr('Load Styles'), self.iface.mainWindow())
+            QIcon(icon), tr('Load styles automatically'), self.iface.mainWindow())
         self.action_enable_sync_style.setStatusTip(tooltip)
         self.action_enable_sync_style.setWhatsThis(tooltip)
         self.action_enable_sync_style.setCheckable(True)
@@ -97,7 +97,7 @@ class DbStyleManager:
         # Load style legend
         icon = resources_path('icon.png')
         self.action_load_style_legend = QAction(
-            QIcon(icon), tr('Load style'), self.iface.legendInterface())
+            QIcon(icon), tr('Reset all styles'), self.iface.legendInterface())
         self.action_load_style_legend.triggered.connect(self.load_style_legend)
 
         # Save style
@@ -170,6 +170,10 @@ class DbStyleManager:
         manager.renameStyle(manager.currentStyle(), '')
         manager.renameStyle('', 'default')
         styles = layer.listStylesInDatabase()
+        if len(styles) == 0:
+            # No style in the database, we do nothing
+            return
+
         number_styles = styles[0]
         related_styles_idx = styles[1][0:number_styles]
         related_styles_names = styles[2][0:number_styles]
