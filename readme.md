@@ -1,7 +1,10 @@
 # Database style manager
 This plugin allows you to synchronize styles contained in PostgreSQL with QGIS Desktop.
 
-Only for QGIS 2. QGIS 2.18.20 is needed to save style in the DB.
+QGIS 2.18.20 is needed to save style in the DB.
+
+* [master](https://github.com/PnGuadeloupe/db-style-manager/tree/master) for QGIS 2
+* [master_qgis3](https://github.com/PnGuadeloupe/db-style-manager/tree/master_qgis3) for QGIS 3
 
 ## By default, with QGIS Desktop, without the plugin
 
