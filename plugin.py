@@ -171,10 +171,14 @@ class DbStyleManager:
         manager.renameStyle('', 'default')
         styles = layer.listStylesInDatabase()
         if len(styles) == 0:
-            # No style in the database, we do nothing
+            # No style for all layers in the database, we do nothing
             return
 
         number_styles = styles[0]
+        if number_styles == 0:
+            # No style for this layer in the database, we do nothing
+            return
+
         related_styles_idx = styles[1][0:number_styles]
         related_styles_names = styles[2][0:number_styles]
         related_styles_description = styles[3][0:number_styles]
@@ -183,13 +187,15 @@ class DbStyleManager:
             xml_style = layer.getStyleFromDatabase(style[0], '')
             # description = style[2]
             manager.addStyle(style[1], QgsMapLayerStyle(xml_style))
-        if len(related_styles) > 0:
-            # If we have at least one style, we take the first one for the title and name
-            layer.setTitle(related_styles[0][2])
-            layer.setName(related_styles[0][2])
-        if number_styles:
-            manager.setCurrentStyle(related_styles[0][1])
-            manager.removeStyle('default')
+
+        # Deactivated in 0.3, because in QGIS 2.18 we can't know which one is the default style
+        # if len(number_styles) > 0:
+        #     # If we have at least one style, we take the first one for the title and name
+        #     layer.setTitle(related_styles[0][2])
+        #     layer.setName(related_styles[0][2])
+
+        manager.setCurrentStyle(related_styles[0][1])
+        manager.removeStyle('default')
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
