@@ -183,8 +183,10 @@ class DbStyleManager:
             xml_style = layer.getStyleFromDatabase(style[0], '')
             # description = style[2]
             manager.addStyle(style[1], QgsMapLayerStyle(xml_style))
-        layer.setTitle(related_styles[0][2])
-        layer.setName(related_styles[0][2])
+        if len(related_styles) > 0:
+            # If we have at least one style, we take the first one for the title and name
+            layer.setTitle(related_styles[0][2])
+            layer.setName(related_styles[0][2])
         if number_styles:
             manager.setCurrentStyle(related_styles[0][1])
             manager.removeStyle('default')
