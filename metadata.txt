@@ -2,7 +2,7 @@
 name=DB Style Manager
 qgisMinimumVersion=2.18
 description=Manage your styles stored in PostGIS
-version=0.1
+version=0.2
 author=Etienne Trimaille
 email=etienne.trimaille@gmail.com
 
