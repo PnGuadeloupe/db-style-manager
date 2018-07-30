@@ -23,8 +23,8 @@
 import os.path
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from qgis.PyQt.QtGui import QAction, QIcon
-from qgis.core import QgsMapLayer, QgsVectorLayer, QgsMapLayerRegistry, QgsMapLayerStyle, QGis
+from qgis.PyQt.QtGui import QAction, QIcon, QInputDialog
+from qgis.core import QgsMapLayer, QgsVectorLayer, QgsMapLayerRegistry, QgsMapLayerStyle, QGis, QgsDataSourceURI, QgsMapLayerRegistry
 from tools import resources_path, tr
 
 
@@ -60,6 +60,7 @@ class DbStyleManager:
         self.toolbar = self.iface.addToolBar(u'DbStyleManager')
         self.toolbar.setObjectName(u'DbStyleManager')
 
+        self.action_load_qgis_style_layer = None
         self.action_enable_sync_style = None
         self.action_load_style_legend = None
         self.action_save_style = None
@@ -88,6 +89,17 @@ class DbStyleManager:
         self.action_enable_sync_style.triggered.connect(self.enable_load_style)
         self.iface.addPluginToMenu(tr('DB Style Manager'), self.action_enable_sync_style)
         self.toolbar.addAction(self.action_enable_sync_style)
+
+        # Display layer_styles table
+        tooltip = tr('Load the QGIS layer_style table from PostgreSQL')
+        icon = resources_path('qgis_layer.png')
+        self.action_load_qgis_style_layer = QAction(
+            QIcon(icon), tr('Load layer_style table'), self.iface.mainWindow())
+        self.action_load_qgis_style_layer.setStatusTip(tooltip)
+        self.action_load_qgis_style_layer.setWhatsThis(tooltip)
+        self.action_load_qgis_style_layer.triggered.connect(self.load_qgis_style_layer)
+        self.iface.addPluginToMenu(tr('DB Style Manager'), self.action_load_qgis_style_layer)
+        self.toolbar.addAction(self.action_load_qgis_style_layer)
 
         # Crash
         s = QSettings()
@@ -124,6 +136,69 @@ class DbStyleManager:
         registry.layersAdded.connect(self.manage_style)
 
         self.enable_load_style()
+
+    def load_qgis_style_layer(self):
+        qs = QSettings()
+        qs.beginGroup('PostgreSQL/connections')
+        names = []
+        for k in sorted(qs.allKeys()):
+            if '/' in k:
+                parts = k.split('/')
+                if parts[0] not in names:
+                    names.append(parts[0])
+        qs.endGroup()
+
+        connexion_name, ok = QInputDialog.getItem(
+            self.iface.mainWindow(), 'Select Database', 'List of connexions', names, 0, False)
+
+        table_name = 'layer_styles'
+        qs.beginGroup('PostgreSQL/connections/' + connexion_name)
+        credentials = {
+            'service': None,
+            'host': None,
+            'port': None,
+            'database': None,
+            'username': None,
+            'password': None,
+        }
+
+        for k in sorted(qs.allKeys()):
+            if k in credentials.keys():
+                credentials[k] = qs.value(k)
+        qs.endGroup()
+
+        is_host = credentials['host'] != ''
+        uri = QgsDataSourceURI()
+        if is_host:
+            uri.setConnection(credentials['host'], credentials['port'], credentials['database'], credentials['username'], credentials['password'], QgsDataSourceURI.SSLdisable, '')
+        else:
+            uri.setConnection(credentials['service'], credentials['database'],  credentials['username'], credentials['password'], QgsDataSourceURI.SSLdisable, '')
+
+        uri.setDataSource('public', table_name, None, '', 'id')
+        vlayer = QgsVectorLayer(uri.uri(False), table_name, 'postgres')
+        if vlayer.isValid():
+            QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+
+        # Synthese qgis_layer
+        sql = ("(SELECT "
+               "layer_styles.f_table_schema, "
+               "layer_styles.f_table_name, "
+               "bool_or(layer_styles.useasdefault) AS has_a_default, "
+               "count(*) AS nb_styles "
+               "FROM layer_styles "
+               "GROUP BY layer_styles.f_table_schema, layer_styles.f_table_name)")
+
+        uri = QgsDataSourceURI()
+        if is_host:
+            uri.setConnection(credentials['host'], credentials['port'], credentials['database'], credentials['username'], credentials['password'], QgsDataSourceURI.SSLdisable, '')
+        else:
+            uri.setConnection(credentials['service'], credentials['database'],  credentials['username'], credentials['password'], QgsDataSourceURI.SSLdisable, '')
+
+        uri.setDataSource('', sql, None, '', 'f_table_schema,f_table_name')
+
+        layer = QgsVectorLayer(uri.uri(), 'Synthese', 'postgres')
+        if layer.isValid():
+            QgsMapLayerRegistry.instance().addMapLayer(layer)
 
     def save_current_style(self):
         if QGis.QGIS_VERSION_INT >= 21820:
@@ -199,7 +274,10 @@ class DbStyleManager:
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
+        self.iface.removePluginMenu(tr('DB Style Manager'), self.action_enable_sync_style)
+        self.iface.removePluginMenu(tr('DB Style Manager'), self.action_load_qgis_style_layer)
         self.iface.removeToolBarIcon(self.action_enable_sync_style)
+        self.iface.removeToolBarIcon(self.action_load_qgis_style_layer)
         self.iface.legendInterface().removeLegendLayerAction(self.action_save_style)
         self.iface.legendInterface().removeLegendLayerAction(self.action_save_style_default)
         self.iface.legendInterface().removeLegendLayerAction(self.action_load_style_legend)
