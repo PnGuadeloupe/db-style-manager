@@ -320,8 +320,10 @@ class DbStyleManager:
         #     layer.setTitle(related_styles[0][2])
         #     layer.setName(related_styles[0][2])
 
-        manager.setCurrentStyle(related_styles[0][1])
-        manager.removeStyle('default')
+        if len(related_styles) >= 1:
+            # We got one layer, we can set it by default in QGIS
+            manager.setCurrentStyle(related_styles[0][1])
+            manager.removeStyle('default')
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
