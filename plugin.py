@@ -92,7 +92,7 @@ class DbStyleManager:
 
         # Display layer_styles table
         tooltip = tr('Load a style summary from PostgreSQL')
-        icon = resources_path('qgis_layer.png')
+        icon = resources_path('qgis_layer.svg')
         self.action_load_qgis_style_layer = QAction(
             QIcon(icon), tr('Load a style summary from PostgreSQL'), self.iface.mainWindow())
         self.action_load_qgis_style_layer.setStatusTip(tooltip)
