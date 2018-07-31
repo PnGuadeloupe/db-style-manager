@@ -24,7 +24,7 @@ import os.path
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from qgis.PyQt.QtGui import QAction, QIcon, QInputDialog
-from qgis.core import QgsMapLayer, QgsVectorLayer, QgsMapLayerRegistry, QgsMapLayerStyle, QGis, QgsDataSourceURI, QgsMapLayerRegistry
+from qgis.core import QgsMapLayer, QgsVectorLayer, QgsMapLayerRegistry, QgsMapLayerStyle, QGis, QgsDataSourceURI, QgsMapLayerRegistry, QgsProject
 from tools import resources_path, tr
 
 
@@ -91,10 +91,10 @@ class DbStyleManager:
         self.toolbar.addAction(self.action_enable_sync_style)
 
         # Display layer_styles table
-        tooltip = tr('Load the QGIS layer_style table from PostgreSQL')
+        tooltip = tr('Load a style summary from PostgreSQL')
         icon = resources_path('qgis_layer.png')
         self.action_load_qgis_style_layer = QAction(
-            QIcon(icon), tr('Load layer_style table'), self.iface.mainWindow())
+            QIcon(icon), tr('Load a style summary from PostgreSQL'), self.iface.mainWindow())
         self.action_load_qgis_style_layer.setStatusTip(tooltip)
         self.action_load_qgis_style_layer.setWhatsThis(tooltip)
         self.action_load_qgis_style_layer.triggered.connect(self.load_qgis_style_layer)
@@ -148,11 +148,22 @@ class DbStyleManager:
                     names.append(parts[0])
         qs.endGroup()
 
-        connexion_name, ok = QInputDialog.getItem(
-            self.iface.mainWindow(), 'Select Database', 'List of connexions', names, 0, False)
+        connection_name, ok = QInputDialog.getItem(
+            self.iface.mainWindow(),
+            'Select Database',
+            'List of connections. This tool will create a group with different layers.',
+            names,
+            0,
+            False)
+
+        layers = []
+
+        if not ok:
+            # No database selected, we abort
+            return
 
         table_name = 'layer_styles'
-        qs.beginGroup('PostgreSQL/connections/' + connexion_name)
+        qs.beginGroup('PostgreSQL/connections/' + connection_name)
         credentials = {
             'service': None,
             'host': None,
@@ -174,31 +185,71 @@ class DbStyleManager:
         else:
             uri.setConnection(credentials['service'], credentials['database'],  credentials['username'], credentials['password'], QgsDataSourceURI.SSLdisable, '')
 
+        # QGIS Layer styles table
         uri.setDataSource('public', table_name, None, '', 'id')
         vlayer = QgsVectorLayer(uri.uri(False), table_name, 'postgres')
         if vlayer.isValid():
-            QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+            layers.append(vlayer)
 
-        # Synthese qgis_layer
-        sql = ("(SELECT "
-               "layer_styles.f_table_schema, "
-               "layer_styles.f_table_name, "
-               "bool_or(layer_styles.useasdefault) AS has_a_default, "
-               "count(*) AS nb_styles "
-               "FROM layer_styles "
-               "GROUP BY layer_styles.f_table_schema, layer_styles.f_table_name)")
-
-        uri = QgsDataSourceURI()
-        if is_host:
-            uri.setConnection(credentials['host'], credentials['port'], credentials['database'], credentials['username'], credentials['password'], QgsDataSourceURI.SSLdisable, '')
-        else:
-            uri.setConnection(credentials['service'], credentials['database'],  credentials['username'], credentials['password'], QgsDataSourceURI.SSLdisable, '')
-
+        # Summary
+        sql = """\
+(SELECT
+ layer_styles.f_table_schema,
+ layer_styles.f_table_name,
+ bool_or(layer_styles.useasdefault) AS has_a_default,
+ count(*) AS nb_styles
+ FROM public.layer_styles
+ GROUP BY layer_styles.f_table_schema, layer_styles.f_table_name)""".replace('\n', '')
         uri.setDataSource('', sql, None, '', 'f_table_schema,f_table_name')
-
-        layer = QgsVectorLayer(uri.uri(), 'Synthese', 'postgres')
+        layer = QgsVectorLayer(uri.uri(), 'Summary existing styles', 'postgres')
         if layer.isValid():
-            QgsMapLayerRegistry.instance().addMapLayer(layer)
+            layers.append(layer)
+
+        # Orphaned styles
+        sql = """\
+(SELECT
+ layer_styles.f_table_schema::text,
+ layer_styles.f_table_name::text
+ FROM public.layer_styles
+ GROUP BY layer_styles.f_table_schema, layer_styles.f_table_name
+ EXCEPT (
+ SELECT
+ pg_tables.schemaname AS f_table_schema,
+ pg_tables.tablename AS f_table_name
+ FROM pg_tables
+ WHERE pg_tables.schemaname NOT IN ('pg_catalog', 'information_schema')))""".replace('\n', '')
+        uri.setDataSource('', sql, None, '', 'f_table_schema,f_table_name')
+        layer = QgsVectorLayer(uri.uri(), 'Orphaned styles', 'postgres')
+        if layer.isValid():
+            layers.append(layer)
+
+        # Missing styles
+        sql = """\
+(SELECT
+ pg_tables.schemaname::text AS f_table_schema,
+ pg_tables.tablename::text AS f_table_name
+ FROM pg_tables
+ WHERE pg_tables.schemaname NOT IN ('pg_catalog', 'information_schema')
+ EXCEPT
+ (
+ SELECT
+ layer_styles.f_table_schema,
+ layer_styles.f_table_name
+ FROM public.layer_styles
+ GROUP BY layer_styles.f_table_schema, layer_styles.f_table_name
+ )
+ )""".replace('\n', '')
+        uri.setDataSource('', sql, None, '', 'f_table_schema,f_table_name')
+        layer = QgsVectorLayer(uri.uri(), 'Missing styles', 'postgres')
+        if layer.isValid():
+            layers.append(layer)
+
+        # Add all layers to a group
+        root = QgsProject.instance().layerTreeRoot()
+        group_analysis = root.insertGroup(0, connection_name)
+        for layer in layers:
+            QgsMapLayerRegistry.instance().addMapLayer(layer, False)
+            group_analysis.addLayer(layer)
 
     def save_current_style(self):
         if QGis.QGIS_VERSION_INT >= 21820:
