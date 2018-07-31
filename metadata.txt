@@ -2,7 +2,7 @@
 name=DB Style Manager
 qgisMinimumVersion=2.18
 description=Manage your styles stored in PostGIS
-version=0.2
+version=0.3
 author=Etienne Trimaille
 email=etienne.trimaille@gmail.com
 
@@ -17,7 +17,7 @@ repository=https://github.com/PnGuadeloupe/db-style-manager
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=postgis,database,postgresql,style,sync
+tags=postgis,database,postgresql,style,sync,qml
 
 homepage=https://github.com/PnGuadeloupe/db-style-manager
 category=Database
