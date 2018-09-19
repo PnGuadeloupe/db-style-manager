@@ -194,13 +194,16 @@ class DbStyleManager:
         # Summary
         sql = """\
 (SELECT
- layer_styles.f_table_schema,
- layer_styles.f_table_name,
- bool_or(layer_styles.useasdefault) AS has_a_default,
- count(*) AS nb_styles
- FROM public.layer_styles
- GROUP BY layer_styles.f_table_schema, layer_styles.f_table_name)""".replace('\n', '')
-        uri.setDataSource('', sql, None, '', 'f_table_schema,f_table_name')
+    layer_styles.f_table_schema,
+    layer_styles.f_table_name,
+    layer_styles.f_geometry_column,
+    bool_or(layer_styles.useasdefault) AS has_a_default,
+    count(*) AS nb_styles
+ FROM
+    public.layer_styles
+ GROUP BY layer_styles.f_table_schema, layer_styles.f_table_name, layer_styles.f_geometry_column)""".replace('\n', '')
+
+        uri.setDataSource('', sql, None, '', 'f_table_schema,f_table_name,f_geometry_column')
         layer = QgsVectorLayer(uri.uri(), 'Summary existing styles', 'postgres')
         if layer.isValid():
             layers.append(layer)
@@ -208,16 +211,24 @@ class DbStyleManager:
         # Orphaned styles
         sql = """\
 (SELECT
- layer_styles.f_table_schema::text,
- layer_styles.f_table_name::text
- FROM public.layer_styles
- GROUP BY layer_styles.f_table_schema, layer_styles.f_table_name
+    layer_styles.f_table_schema::text,
+    layer_styles.f_table_name::text,
+    layer_styles.f_geometry_column::text
+ FROM
+    public.layer_styles
+ GROUP BY layer_styles.f_table_schema, layer_styles.f_table_name, layer_styles.f_geometry_column
  EXCEPT (
- SELECT
- pg_tables.schemaname AS f_table_schema,
- pg_tables.tablename AS f_table_name
- FROM pg_tables
- WHERE pg_tables.schemaname NOT IN ('pg_catalog', 'information_schema')))""".replace('\n', '')
+    SELECT
+        pg_tables.schemaname AS f_table_schema,
+        pg_tables.tablename AS f_table_name,
+        geom_view.f_geometry_column
+    FROM
+        pg_tables, geometry_columns geom_view
+    WHERE
+        geom_view.f_table_schema = pg_tables.schemaname
+    AND geom_view.f_table_name = pg_tables.tablename
+    AND pg_tables.schemaname NOT IN ('pg_catalog', 'information_schema')))""".replace('\n', '')
+
         uri.setDataSource('', sql, None, '', 'f_table_schema,f_table_name')
         layer = QgsVectorLayer(uri.uri(), 'Orphaned styles', 'postgres')
         if layer.isValid():
@@ -226,19 +237,28 @@ class DbStyleManager:
         # Missing styles
         sql = """\
 (SELECT
- pg_tables.schemaname::text AS f_table_schema,
- pg_tables.tablename::text AS f_table_name
- FROM pg_tables
- WHERE pg_tables.schemaname NOT IN ('pg_catalog', 'information_schema')
+    pg_tables.schemaname::text AS f_table_schema,
+    pg_tables.tablename::text AS f_table_name,
+    geom_view.f_geometry_column::text
+ FROM
+    pg_tables, geometry_columns geom_view
+ WHERE
+    geom_view.f_table_schema = pg_tables.schemaname
+ AND
+    geom_view.f_table_name = pg_tables.tablename
+ AND
+    pg_tables.schemaname NOT IN ('pg_catalog', 'information_schema')
  EXCEPT
  (
  SELECT
- layer_styles.f_table_schema,
- layer_styles.f_table_name
- FROM public.layer_styles
- GROUP BY layer_styles.f_table_schema, layer_styles.f_table_name
- )
- )""".replace('\n', '')
+    layer_styles.f_table_schema::text,
+    layer_styles.f_table_name::text,
+    layer_styles.f_geometry_column::text
+ FROM
+    public.layer_styles
+ GROUP BY layer_styles.f_table_schema, layer_styles.f_table_name, layer_styles.f_geometry_column
+ ))""".replace('\n', '')
+
         uri.setDataSource('', sql, None, '', 'f_table_schema,f_table_name')
         layer = QgsVectorLayer(uri.uri(), 'Missing styles', 'postgres')
         if layer.isValid():
