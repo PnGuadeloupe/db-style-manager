@@ -35,6 +35,10 @@ LOCALES =
 #LRELEASE = lrelease-qt4
 
 
+clean_pyc:
+	@echo "Cleaning python files"
+    @find . -name "*.pyc" -type f -delete
+
 # translation
 SOURCES = \
 	__init__.py \
