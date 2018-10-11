@@ -324,7 +324,13 @@ class DbStyleManager:
             layer = self.iface.activeLayer()
             name = layer.name()
             manager = layer.styleManager()
-            layer.saveStyleToDatabase(manager.currentStyle(), name, False, '', '')
+            if Qgis.QGIS_VERSION_INT > 30000:
+                layer.saveStyleToDatabase(manager.currentStyle(), name, False, '')
+            else:
+                layer.saveStyleToDatabase(manager.currentStyle(), name, False, '', '')
+            self.iface.messageBar().pushSuccess(
+                tr('Style Saved'),
+                tr('The style has been save successfully.'))
         else:
             self.iface.messageBar().pushCritical(
                 tr('QGIS >= 2.18.20 is needed'),
@@ -335,7 +341,13 @@ class DbStyleManager:
             layer = self.iface.activeLayer()
             name = layer.name()
             manager = layer.styleManager()
-            layer.saveStyleToDatabase(manager.currentStyle(), name, True, '', '')
+            if Qgis.QGIS_VERSION_INT >= 30000:
+                layer.saveStyleToDatabase(manager.currentStyle(), name, True, '')
+            else:
+                layer.saveStyleToDatabase(manager.currentStyle(), name, True, '', '')
+            self.iface.messageBar().pushSuccess(
+                tr('Style Saved'),
+                tr('The style has been save successfully.'))
         else:
             self.iface.messageBar().pushCritical(
                 tr('QGIS >= 2.18.20 is needed'),
@@ -353,8 +365,7 @@ class DbStyleManager:
     def load_style_legend(self):
         self.load_style_from_database(self.iface.activeLayer())
 
-    @staticmethod
-    def load_style_from_database(layer):
+    def load_style_from_database(self, layer):
         manager = layer.styleManager()
         existing_styles = manager.styles()
         for s in existing_styles:
@@ -396,6 +407,11 @@ class DbStyleManager:
             # We got one layer, we can set it by default in QGIS
             manager.setCurrentStyle(related_styles[0][1])
             manager.removeStyle('default')
+
+        self.iface.messageBar().pushInfo(
+            tr('Style Loaded'),
+            tr('{layer_name} has {number} styles loaded successfully.').format(
+                layer_name=layer.name(), number=len(list(related_styles))))
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
