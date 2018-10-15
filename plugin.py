@@ -408,10 +408,10 @@ class DbStyleManager:
             manager.setCurrentStyle(related_styles[0][1])
             manager.removeStyle('default')
 
-        self.iface.messageBar().pushInfo(
-            tr('Style Loaded'),
-            tr('{layer_name} has {number} styles loaded successfully.').format(
-                layer_name=layer.name(), number=len(list(related_styles))))
+            self.iface.messageBar().pushInfo(
+                tr('Style Loaded'),
+                tr('{layer_name} has {number} styles loaded successfully.').format(
+                    layer_name=layer.name(), number=len(list(related_styles))))
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
