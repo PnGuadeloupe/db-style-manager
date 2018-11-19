@@ -1,0 +1,11 @@
+/docs/ export-ignore
+/i18n/*.ts export-ignore
+/.github/ export-ignore
+/.tx/ export-ignore
+/scripts/ export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
+Makefile export-ignore
+pylintrc export-ignore
+readme.md export-ignore
+release.sh export-ignore
