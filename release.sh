@@ -37,6 +37,6 @@ if [[ $REPLY =~ ^[Yy]$ ]]
 then
     echo "Building ${PLUGIN_NAME}.zip"
     git archive --prefix=${PLUGIN_NAME}/ -o ${PLUGIN_NAME}.zip HEAD
-    # git tag ${VERSION}
-    # git push --tags ${REMOTE_NAME}
+    git tag ${VERSION}
+    git push --tags ${REMOTE_NAME}
 fi
