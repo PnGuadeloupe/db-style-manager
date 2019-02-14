@@ -1,9 +1,9 @@
 [general]
 name=DB Style Manager
-qgisMinimumVersion=2.18
+qgisMinimumVersion=3.4
 qgisMaximumVersion=3.99
 description=Manage your styles stored in PostGIS
-version=0.8.0
+version=0.9.0
 author=Etienne Trimaille
 email=etienne.trimaille@gmail.com
 
@@ -16,6 +16,9 @@ repository=https://github.com/PnGuadeloupe/db-style-manager
 
 # Uncomment the following line and add your changelog:
 # changelog=
+  Version 0.9
+  * QGIS 3.4 only
+  * Add stable API for calling the plugin from outside the plugin
   Version 0.8
   * Display message bar when at least one style is loaded
   Version 0.7

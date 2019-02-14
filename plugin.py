@@ -22,24 +22,11 @@
 """
 import os.path
 
-try:
-    # QGIS 3
-    from qgis.core import Qgis
-except ImportError:
-    # QGIS 2
-    from qgis.core import QGis as Qgis
-
-from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from qgis.core import QgsMapLayer, QgsVectorLayer, QgsMapLayerStyle, QgsProject
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.core import Qgis, QgsMapLayer, QgsVectorLayer, QgsMapLayerStyle, QgsProject, QgsDataSourceUri
+from qgis.PyQt.QtWidgets import QAction, QInputDialog
 from qgis.PyQt.QtGui import QIcon
-
-# noinspection PyUnboundLocalVariable
-if Qgis.QGIS_VERSION_INT > 30000:
-    from qgis.core import QgsDataSourceUri
-    from qgis.PyQt.QtWidgets import QAction, QInputDialog
-else:
-    from qgis.core import QgsDataSourceURI as QgsDataSourceUri, QgsMapLayerRegistry
-    from qgis.PyQt.QtGui import QAction, QInputDialog
+from qgis.utils import iface
 
 from .tools import resources_path, tr
 
@@ -67,10 +54,7 @@ class DbStyleManager:
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
-
-            if qVersion() > '4.3.3':
-                # noinspection PyArgumentList,PyCallByClass
-                QCoreApplication.installTranslator(self.translator)
+            QCoreApplication.installTranslator(self.translator)
 
         self.menu = tr(u'&DB Style Manager')
         self.toolbar = self.iface.addToolBar(u'DbStyleManager')
@@ -124,54 +108,27 @@ class DbStyleManager:
 
         # Load style legend
         icon = resources_path('icon.png')
-        if Qgis.QGIS_VERSION_INT < 30000:
-            self.action_load_style_legend = QAction(
-                QIcon(icon), tr('Reset all styles'), self.iface.legendInterface())
-        else:
-            self.action_load_style_legend = QAction(
-                QIcon(icon), tr('Reset all styles'))
+        self.action_load_style_legend = QAction(QIcon(icon), tr('Reset all styles'))
         self.action_load_style_legend.triggered.connect(self.load_style_legend)
 
         # Save style
         icon = resources_path('icon.png')
-        if Qgis.QGIS_VERSION_INT < 30000:
-            self.action_save_style = QAction(
-                QIcon(icon), tr('Save style'), self.iface.legendInterface())
-        else:
-            self.action_save_style = QAction(
-                QIcon(icon), tr('Save style'))
+        self.action_save_style = QAction(QIcon(icon), tr('Save style'))
         self.action_save_style.triggered.connect(self.save_current_style)
 
         # Save style as default
         icon = resources_path('icon.png')
-        if Qgis.QGIS_VERSION_INT < 30000:
-            self.action_save_style_default = QAction(
-                QIcon(icon), tr('Save style as default'), self.iface.legendInterface())
-        else:
-            self.action_save_style_default = QAction(
-                QIcon(icon), tr('Save style as default'))
+        self.action_save_style_default = QAction(QIcon(icon), tr('Save style as default'))
         self.action_save_style_default.triggered.connect(self.save_current_style_default)
 
-        if Qgis.QGIS_VERSION_INT < 30000:
-            self.iface.legendInterface().addLegendLayerAction(
-                self.action_save_style, tr('Database Style Manager'), '', QgsMapLayer.VectorLayer, True)
-            self.iface.legendInterface().addLegendLayerAction(
-                self.action_save_style_default, tr('Database Style Manager'), '', QgsMapLayer.VectorLayer, True)
-            self.iface.legendInterface().addLegendLayerAction(
-                self.action_load_style_legend, tr('Database Style Manager'), '', QgsMapLayer.VectorLayer, True)
-        else:
-            self.iface.addCustomActionForLayerType(
-                self.action_save_style, tr('Database Style Manager'), QgsMapLayer.VectorLayer, True)
-            self.iface.addCustomActionForLayerType(
-                self.action_save_style_default, tr('Database Style Manager'), QgsMapLayer.VectorLayer, True)
-            self.iface.addCustomActionForLayerType(
-                self.action_load_style_legend, tr('Database Style Manager'), QgsMapLayer.VectorLayer, True)
+        self.iface.addCustomActionForLayerType(
+            self.action_save_style, tr('Database Style Manager'), QgsMapLayer.VectorLayer, True)
+        self.iface.addCustomActionForLayerType(
+            self.action_save_style_default, tr('Database Style Manager'), QgsMapLayer.VectorLayer, True)
+        self.iface.addCustomActionForLayerType(
+            self.action_load_style_legend, tr('Database Style Manager'), QgsMapLayer.VectorLayer, True)
 
-        if Qgis.QGIS_VERSION_INT < 30000:
-            # noinspection PyArgumentList
-            registry = QgsMapLayerRegistry.instance()
-        else:
-            registry = QgsProject.instance()
+        registry = QgsProject.instance()
         registry.layersAdded.connect(self.manage_style)
 
         self.enable_load_style()
@@ -220,15 +177,9 @@ class DbStyleManager:
         is_host = credentials['host'] != ''
         uri = QgsDataSourceUri()
         if is_host:
-            if Qgis.QGIS_VERSION_INT < 30000:
-                uri.setConnection(credentials['host'], credentials['port'], credentials['database'], credentials['username'], credentials['password'], QgsDataSourceUri.SSLdisable, '')
-            else:
-                uri.setConnection(credentials['host'], credentials['port'], credentials['database'], credentials['username'], credentials['password'], QgsDataSourceUri.SslDisable, '')
+            uri.setConnection(credentials['host'], credentials['port'], credentials['database'], credentials['username'], credentials['password'], QgsDataSourceUri.SslDisable, '')
         else:
-            if Qgis.QGIS_VERSION_INT < 30000:
-                uri.setConnection(credentials['service'], credentials['database'],  credentials['username'], credentials['password'], QgsDataSourceUri.SSLdisable, '')
-            else:
-                uri.setConnection(credentials['service'], credentials['database'], credentials['username'], credentials['password'], QgsDataSourceUri.SslDisable, '')
+            uri.setConnection(credentials['service'], credentials['database'], credentials['username'], credentials['password'], QgsDataSourceUri.SslDisable, '')
 
         # QGIS Layer styles table
         uri.setDataSource('public', table_name, None, '', 'id')
@@ -313,45 +264,26 @@ class DbStyleManager:
         root = QgsProject.instance().layerTreeRoot()
         group_analysis = root.insertGroup(0, connection_name)
         for layer in layers:
-            if Qgis.QGIS_VERSION_INT < 30000:
-                QgsMapLayerRegistry.instance().addMapLayer(layer, False)
-            else:
-                QgsProject.instance().addMapLayer(layer, False)
+            QgsProject.instance().addMapLayer(layer, False)
             group_analysis.addLayer(layer)
 
     def save_current_style(self):
-        if Qgis.QGIS_VERSION_INT >= 21820:
-            layer = self.iface.activeLayer()
-            name = layer.name()
-            manager = layer.styleManager()
-            if Qgis.QGIS_VERSION_INT > 30000:
-                layer.saveStyleToDatabase(manager.currentStyle(), name, False, '')
-            else:
-                layer.saveStyleToDatabase(manager.currentStyle(), name, False, '', '')
-            self.iface.messageBar().pushSuccess(
-                tr('Style Saved'),
-                tr('The style has been save successfully.'))
-        else:
-            self.iface.messageBar().pushCritical(
-                tr('QGIS >= 2.18.20 is needed'),
-                tr('QGIS >= 2.18.20 is needed to save style in database.'))
+        layer = self.iface.activeLayer()
+        name = layer.name()
+        manager = layer.styleManager()
+        layer.saveStyleToDatabase(manager.currentStyle(), name, False, '')
+        self.iface.messageBar().pushSuccess(
+            tr('Style Saved'),
+            tr('The style has been save successfully.'))
 
     def save_current_style_default(self):
-        if Qgis.QGIS_VERSION_INT >= 21820:
-            layer = self.iface.activeLayer()
-            name = layer.name()
-            manager = layer.styleManager()
-            if Qgis.QGIS_VERSION_INT >= 30000:
-                layer.saveStyleToDatabase(manager.currentStyle(), name, True, '')
-            else:
-                layer.saveStyleToDatabase(manager.currentStyle(), name, True, '', '')
-            self.iface.messageBar().pushSuccess(
-                tr('Style Saved'),
-                tr('The style has been save successfully.'))
-        else:
-            self.iface.messageBar().pushCritical(
-                tr('QGIS >= 2.18.20 is needed'),
-                tr('QGIS >= 2.18.20 is needed to save style in database.'))
+        layer = self.iface.activeLayer()
+        name = layer.name()
+        manager = layer.styleManager()
+        layer.saveStyleToDatabase(manager.currentStyle(), name, True, '')
+        self.iface.messageBar().pushSuccess(
+            tr('Style Saved'),
+            tr('The style has been save successfully.'))
 
     def enable_load_style(self):
         s = QSettings()
@@ -389,10 +321,7 @@ class DbStyleManager:
         related_styles_description = styles[3][0:number_styles]
         related_styles = zip(related_styles_idx, related_styles_names, related_styles_description)
         for style in related_styles:
-            if Qgis.QGIS_VERSION_INT < 30000:
-                xml_style = layer.getStyleFromDatabase(style[0], '')
-            else:
-                xml_style = layer.getStyleFromDatabase(style[0])[0]
+            xml_style = layer.getStyleFromDatabase(style[0])[0]
             # description = style[2]
             manager.addStyle(style[1], QgsMapLayerStyle(xml_style))
 
@@ -408,7 +337,7 @@ class DbStyleManager:
             manager.setCurrentStyle(related_styles[0][1])
             manager.removeStyle('default')
 
-            self.iface.messageBar().pushInfo(
+            iface.messageBar().pushInfo(
                 tr('Style Loaded'),
                 tr('{layer_name} has {number} styles loaded successfully.').format(
                     layer_name=layer.name(), number=len(list(related_styles))))
@@ -419,12 +348,7 @@ class DbStyleManager:
         self.iface.removePluginMenu(tr('DB Style Manager'), self.action_load_qgis_style_layer)
         self.iface.removeToolBarIcon(self.action_enable_sync_style)
         self.iface.removeToolBarIcon(self.action_load_qgis_style_layer)
-        if Qgis.QGIS_VERSION_INT < 30000:
-            self.iface.legendInterface().removeLegendLayerAction(self.action_save_style)
-            self.iface.legendInterface().removeLegendLayerAction(self.action_save_style_default)
-            self.iface.legendInterface().removeLegendLayerAction(self.action_load_style_legend)
-        else:
-            self.iface.removeCustomActionForLayerType(self.action_save_style)
-            self.iface.removeCustomActionForLayerType(self.action_save_style_default)
-            self.iface.removeCustomActionForLayerType(self.action_load_style_legend)
+        self.iface.removeCustomActionForLayerType(self.action_save_style)
+        self.iface.removeCustomActionForLayerType(self.action_save_style_default)
+        self.iface.removeCustomActionForLayerType(self.action_load_style_legend)
         del self.toolbar
