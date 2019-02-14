@@ -297,7 +297,8 @@ class DbStyleManager:
     def load_style_legend(self):
         self.load_style_from_database(self.iface.activeLayer())
 
-    def load_style_from_database(self, layer):
+    @staticmethod
+    def load_style_from_database(layer):
         manager = layer.styleManager()
         existing_styles = manager.styles()
         for s in existing_styles:
@@ -331,11 +332,10 @@ class DbStyleManager:
         #     layer.setTitle(related_styles[0][2])
         #     layer.setName(related_styles[0][2])
 
-        # len(zip object) do not exist on Python 3
+        manager.removeStyle('default')
         if len(list(related_styles)) >= 1:
             # We got one layer, we can set it by default in QGIS
             manager.setCurrentStyle(related_styles[0][1])
-            manager.removeStyle('default')
 
             iface.messageBar().pushInfo(
                 tr('Style Loaded'),
