@@ -299,6 +299,13 @@ class DbStyleManager:
 
     @staticmethod
     def load_style_from_database(layer):
+        """Load all styles from database for the given layer.
+
+        Don't change the python signature. It's part of the public API.
+
+        :param layer: The map layer.
+        :type: QgsMapLayer
+        """
         manager = layer.styleManager()
         existing_styles = manager.styles()
         for s in existing_styles:
